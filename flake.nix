@@ -12,7 +12,8 @@
       self,
       nixpkgs,
       flake-utils,
-    }@inputs:
+      twitchdownloadercli,
+    }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -63,7 +64,7 @@
                     '';
                   })
 
-                  inputs.twitchdownloadercli.packages.${pkgs.system}.twitchdownloadercli
+                  twitchdownloadercli
                 ]
               }
           '';
