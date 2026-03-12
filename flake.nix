@@ -34,7 +34,7 @@
             pkgs.python3
             pkgs.yt-dlp
             pkgs.deno
-            twitchdownloadercli
+            self.inputs.twitchdownloadercli.packages.${pkgs.system}.twitchdownloadercli
           ];
 
           installPhase = ''
