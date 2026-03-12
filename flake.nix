@@ -32,7 +32,9 @@
 
           buildInputs = [
             pkgs.python3
+            pkgs.yt-dlp
             pkgs.deno
+            twitchdownloadercli
           ];
 
           installPhase = ''
@@ -41,32 +43,7 @@
             cp $src/main.py $out/bin/streamorganizer
             chmod +x $out/bin/streamorganizer
 
-            wrapProgram $out/bin/streamorganizer \
-              --prefix PATH : ${
-                pkgs.lib.makeBinPath [
-                  pkgs.deno
-                  (pkgs.stdenv.mkDerivation {
-                    name = "yt-dlp-2026.03.03";
-                    dontUnpack = true;
-                    nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-                    buildInputs = [
-                      pkgs.zlib
-                      pkgs.gcc.cc.lib
-                    ];
-                    installPhase = ''
-                      install -Dm755 ${
-                        pkgs.fetchurl {
-                          url = "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.03/yt-dlp_linux";
-                          hash = "sha256-zHBrlM3hz5LMFV42MqopCrXzgJrajFbCMxEzVQjezfk=";
-                        }
-                      } $out/bin/yt-dlp
-                      chmod +x $out/bin/yt-dlp
-                    '';
-                  })
-
-                  twitchdownloadercli
-                ]
-              }
+            wrapProgram $out/bin/streamorganizer
           '';
         };
 
@@ -74,25 +51,8 @@
           packages = with pkgs; [
             (python3.withPackages (ps: [ ]))
             deno
-
-            (pkgs.stdenv.mkDerivation {
-              name = "yt-dlp-2026.03.03";
-              dontUnpack = true;
-              nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-              buildInputs = [
-                pkgs.zlib
-                pkgs.gcc.cc.lib
-              ];
-              installPhase = ''
-                install -Dm755 ${
-                  pkgs.fetchurl {
-                    url = "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.03/yt-dlp_linux";
-                    hash = "sha256-zHBrlM3hz5LMFV42MqopCrXzgJrajFbCMxEzVQjezfk=";
-                  }
-                } $out/bin/yt-dlp
-                chmod +x $out/bin/yt-dlp
-              '';
-            })
+            yt-dlp
+            self.inputs.twitchdownloadercli.packages.${pkgs.system}.twitchdownloadercli
           ];
         };
       }
