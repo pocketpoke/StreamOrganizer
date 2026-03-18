@@ -66,26 +66,25 @@ class VODDirectory:
 
     @classmethod
     def from_path(cls, path: str) -> "VODDirectory":
-        parts = path.split(FOLDER_SEPARATOR)
-        if len(parts) != 2:
+        folder_name = os.path.basename(path)
+        
+        if FOLDER_SEPARATOR not in folder_name:
             raise ValueError(f"Invalid VOD directory path format: {path}")
 
-        number_part = parts[0].replace(FOLDER_NUMBER_PREFIX, "")
-        date_part = parts[1].replace(FOLDER_DATE_SUFFIX, "")
+        number_part = folder_name.split(FOLDER_SEPARATOR)[0].replace(FOLDER_NUMBER_PREFIX, "")
+        date_part = folder_name.split(FOLDER_SEPARATOR)[1].replace(FOLDER_DATE_SUFFIX, "")
 
         return cls.create(
             base_path=os.path.dirname(path), vod_number=number_part, vod_date=date_part
         )
 
     def get_vod_number(self) -> str:
-        return self.base_directory.split(FOLDER_SEPARATOR)[0].replace(
-            FOLDER_NUMBER_PREFIX, ""
-        )
+        folder_name = os.path.basename(self.base_directory)
+        return folder_name.split(FOLDER_SEPARATOR)[0].replace(FOLDER_NUMBER_PREFIX, "")
 
     def get_vod_date(self) -> str:
-        return self.base_directory.split(FOLDER_SEPARATOR)[1].replace(
-            FOLDER_DATE_SUFFIX, ""
-        )
+        folder_name = os.path.basename(self.base_directory)
+        return folder_name.split(FOLDER_SEPARATOR)[1].replace(FOLDER_DATE_SUFFIX, "")
 
     def all(self) -> list[str]:
         return [
