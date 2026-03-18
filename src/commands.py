@@ -1,12 +1,27 @@
 import os
 import shutil
 import time
-from .io_utils import Colors, c, print_download, print_move, print_success, print_error, sanitize_filename
-from .models import ArchiveSummary, Details, DISABLE_FILE_DOWNLOADING, DISABLE_FILE_MOVING, DISABLE_FOLDER_CREATING, VODDirectory
+from .io_utils import (
+    Colors,
+    c,
+    print_download,
+    print_move,
+    print_success,
+    print_error,
+    sanitize_filename,
+)
+from .models import (
+    ArchiveSummary,
+    Details,
+    DISABLE_FILE_DOWNLOADING,
+    DISABLE_FILE_MOVING,
+)
 from .subprocess_utils import get_yt_dlp_base_args, run_command_streaming
 
 
-def organize_file(*, details: Details, file_path: str, summary: ArchiveSummary | None = None) -> bool:
+def organize_file(
+    *, details: Details, file_path: str, summary: ArchiveSummary | None = None
+) -> bool:
     new_file_path = os.path.join(
         details.vod_directory.twitch_directory, f"{details.stream_title}.mp4"
     )
@@ -56,10 +71,7 @@ def organize_file(*, details: Details, file_path: str, summary: ArchiveSummary |
 
 
 def organize_twitch_chat(
-    *, 
-    details: Details, 
-    twitch_url: str, 
-    summary: ArchiveSummary | None = None
+    *, details: Details, twitch_url: str, summary: ArchiveSummary | None = None
 ) -> bool:
     chat_output_path = os.path.join(
         details.vod_directory.twitch_chat_directory,
@@ -115,9 +127,9 @@ def organize_twitch_chat(
 
 
 def organize_youtube(
-    *, 
-    details: Details, 
-    chat_only: bool, 
+    *,
+    details: Details,
+    chat_only: bool,
     youtube_url: str,
     browser: str | None = None,
     summary: ArchiveSummary | None = None,
@@ -179,7 +191,7 @@ def organize_youtube(
     chat_title = details.stream_title
     for ext in [".webm", ".mkv", ".mp4", ".avi", ".mov"]:
         if chat_title.endswith(ext):
-            chat_title = chat_title[:-len(ext)]
+            chat_title = chat_title[: -len(ext)]
             break
 
     chat_title = sanitize_filename(chat_title)

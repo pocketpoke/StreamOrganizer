@@ -1,6 +1,16 @@
-from .discovery import get_incremented_vod_number, list_existing_vod_directories
-from .io_utils import Colors, c, print_info, print_warning, print_error
-from .models import FOLDER_DATE_SUFFIX, FOLDER_NUMBER_PREFIX, FOLDER_SEPARATOR, UserInput, VODDirectory
+from .discovery import (
+    get_incremented_vod_number,
+    list_existing_vod_directories,
+    get_vod_date_from_file,
+)
+from .io_utils import print_info, print_warning
+from .models import (
+    FOLDER_DATE_SUFFIX,
+    FOLDER_NUMBER_PREFIX,
+    FOLDER_SEPARATOR,
+    UserInput,
+    VODDirectory,
+)
 
 
 def ask_yes_no(question: str, default: bool = False) -> bool:
@@ -36,11 +46,15 @@ def select_existing_directory(base_directory: str) -> VODDirectory | None:
     for i, vod_dir in enumerate(directories, 1):
         print(f"  [{i}] {vod_dir.base_directory}")
 
-    print(f"  [n] Create new directory")
+    print("  [n] Create new directory")
     print()
 
     while True:
-        choice = input("Select directory [1-{} or n]: ".format(len(directories))).strip().lower()
+        choice = (
+            input("Select directory [1-{} or n]: ".format(len(directories)))
+            .strip()
+            .lower()
+        )
 
         if choice == "n":
             return None
@@ -94,8 +108,6 @@ def prompt_for_missing_info(
     base_directory: str,
     file_path: str | None = None,
 ) -> UserInput:
-    from .discovery import get_incremented_vod_number, get_vod_date_from_file
-
     result = UserInput()
 
     print_info("=" * 60)

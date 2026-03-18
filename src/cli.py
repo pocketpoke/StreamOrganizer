@@ -15,7 +15,7 @@ from .discovery import (
     get_stream_title_from_file,
     get_vod_date_from_file,
 )
-from .io_utils import Colors, c, print_error, print_info, print_step, print_success, print_warning
+from .io_utils import print_error, print_info, print_step, print_warning
 from .models import ArchiveSummary, Details, VODDirectory
 from .prompts import (
     prompt_for_browser,
@@ -31,40 +31,31 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--file", help="Path to VOD file to organize")
     parser.add_argument(
-        "--twitch-url", 
-        help="Twitch VOD URL for chat download (e.g., https://twitch.tv/videos/123456789)"
+        "--twitch-url",
+        help="Twitch VOD URL for chat download (e.g., https://twitch.tv/videos/123456789)",
     )
+    parser.add_argument("--youtube-url", help="YouTube VOD URL for download")
     parser.add_argument(
-        "--youtube-url", 
-        help="YouTube VOD URL for download"
+        "--chat-only",
+        action="store_true",
+        help="Download only the chat from YouTube VOD (not the video)",
     )
-    parser.add_argument(
-        "--chat-only", 
-        action="store_true", 
-        help="Download only the chat from YouTube VOD (not the video)"
-    )
-    parser.add_argument(
-        "--vod-number", 
-        help="VOD number (overrides auto-detection)"
-    )
-    parser.add_argument(
-        "--vod-date", 
-        help="VOD date in MM-DD-YY format"
-    )
+    parser.add_argument("--vod-number", help="VOD number (overrides auto-detection)")
+    parser.add_argument("--vod-date", help="VOD date in MM-DD-YY format")
     parser.add_argument(
         "--browser",
         choices=["brave", "chrome", "firefox", "edge"],
-        help="Browser for cookie authentication (omit to skip cookies)"
+        help="Browser for cookie authentication (omit to skip cookies)",
     )
     parser.add_argument(
         "--no-prompts",
         action="store_true",
-        help="Batch mode: exit with error instead of prompting for missing info"
+        help="Batch mode: exit with error instead of prompting for missing info",
     )
     parser.add_argument(
         "--base-path",
         default=os.getcwd(),
-        help="Base directory for VOD organization (default: current directory)"
+        help="Base directory for VOD organization (default: current directory)",
     )
 
     return parser.parse_args()
@@ -110,7 +101,9 @@ def ensure_vod_directory(
             vod_date = get_vod_date_from_file(file_path=file_path)
 
         if not vod_date:
-            print_error("Couldn't extract VOD date from filename. Use --vod-date to specify.")
+            print_error(
+                "Couldn't extract VOD date from filename. Use --vod-date to specify."
+            )
             return None, None
 
         start_time = time.time()
@@ -172,7 +165,6 @@ def ensure_vod_directory(
 
 
 def handle_file_organization(
-    args: argparse.Namespace,
     details: Details,
     file_path: str,
     summary: ArchiveSummary | None = None,
@@ -188,7 +180,9 @@ def handle_twitch_chat(
     if not args.twitch_url:
         return True
 
-    return organize_twitch_chat(details=details, twitch_url=args.twitch_url, summary=summary)
+    return organize_twitch_chat(
+        details=details, twitch_url=args.twitch_url, summary=summary
+    )
 
 
 def handle_youtube_download(
@@ -275,8 +269,12 @@ def main() -> int:
                 print_error("Couldn't extract VOD date. Use --vod-date in batch mode.")
                 return 1
 
-        if (args.twitch_url or args.youtube_url) and not (args.vod_number and args.vod_date):
-            print_error("In batch mode, you must specify both --vod-number and --vod-date when downloading without --file")
+        if (args.twitch_url or args.youtube_url) and not (
+            args.vod_number and args.vod_date
+        ):
+            print_error(
+                "In batch mode, you must specify both --vod-number and --vod-date when downloading without --file"
+            )
             return 1
 
     if not browser and not args.no_prompts:
@@ -289,7 +287,9 @@ def main() -> int:
                 print_info("Aborting download due to cookie requirements.")
                 return 1
         else:
-            print_warning("Running without browser cookies - downloads may fail on restricted content")
+            print_warning(
+                "Running without browser cookies - downloads may fail on restricted content"
+            )
 
     vod_directory, details = ensure_vod_directory(
         file_path=args.file,
@@ -305,8 +305,7 @@ def main() -> int:
 
     if details is None:
         mp4_files = [
-            f for f in os.listdir(vod_directory.twitch_directory)
-            if f.endswith(".mp4")
+            f for f in os.listdir(vod_directory.twitch_directory) if f.endswith(".mp4")
         ]
         if mp4_files:
             file_path = os.path.join(vod_directory.twitch_directory, mp4_files[0])
@@ -332,7 +331,7 @@ def main() -> int:
         )
 
     if args.file:
-        if not handle_file_organization(args, details, args.file, summary):
+        if not handle_file_organization(details, args.file, summary):
             pass
 
     if args.twitch_url:

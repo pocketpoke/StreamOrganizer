@@ -1,5 +1,5 @@
 import subprocess
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from os import get_terminal_size
 from .io_utils import Colors, c, print_error
 
@@ -67,7 +67,12 @@ def run_command_streaming(
         if process.returncode == 0:
             print(c(Colors.GREEN, f"[{task_name}] Completed successfully"))
         else:
-            print(c(Colors.RED, f"[{task_name}] Failed with exit code {process.returncode}"))
+            print(
+                c(
+                    Colors.RED,
+                    f"[{task_name}] Failed with exit code {process.returncode}",
+                )
+            )
 
         return CommandResult(
             returncode=process.returncode or 0,
@@ -76,8 +81,12 @@ def run_command_streaming(
         )
 
     except FileNotFoundError:
-        print_error(f"{task_name}: Command not found. Ensure it's installed and in PATH.")
-        return CommandResult(returncode=1, stdout="", stderr=f"Command not found: {cmd[0]}")
+        print_error(
+            f"{task_name}: Command not found. Ensure it's installed and in PATH."
+        )
+        return CommandResult(
+            returncode=1, stdout="", stderr=f"Command not found: {cmd[0]}"
+        )
 
 
 def run_command_simple(cmd: list[str]) -> CommandResult:
@@ -93,14 +102,19 @@ def run_command_simple(cmd: list[str]) -> CommandResult:
             stderr=result.stderr,
         )
     except FileNotFoundError:
-        return CommandResult(returncode=1, stdout="", stderr=f"Command not found: {cmd[0]}")
+        return CommandResult(
+            returncode=1, stdout="", stderr=f"Command not found: {cmd[0]}"
+        )
 
 
 def get_yt_dlp_base_args(*, browser: str | None) -> list[str]:
     args = [
-        "--retries", "infinite",
-        "--fragment-retries", "infinite",
-        "--file-access-retries", "infinite",
+        "--retries",
+        "infinite",
+        "--fragment-retries",
+        "infinite",
+        "--file-access-retries",
+        "infinite",
     ]
     if browser:
         args.extend(["--cookies-from-browser", browser])

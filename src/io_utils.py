@@ -44,14 +44,18 @@ def print_step(message: str) -> None:
 
 
 def print_move(from_path: str, to_path: str) -> None:
-    print(f"""Moving file:
+    print(
+        f"""Moving file:
 - {c(Colors.RED, 'From')}: {c(Colors.RED, from_path)}
-- {c(Colors.GREEN, 'To')}: {c(Colors.GREEN, to_path)}""")
+- {c(Colors.GREEN, 'To')}: {c(Colors.GREEN, to_path)}"""
+    )
 
 
 def print_download(task: str, output_path: str) -> None:
-    print(f"""Downloading and saving {task}:
-- {c(Colors.GREEN, 'To')}: {c(Colors.GREEN, output_path)}""")
+    print(
+        f"""Downloading and saving {task}:
+- {c(Colors.GREEN, 'To')}: {c(Colors.GREEN, output_path)}"""
+    )
 
 
 def print_extracted(label: str, value: str) -> None:
@@ -68,13 +72,14 @@ UNSAFE_CHARS = {
     ":": "：",
     "*": "＊",
     "?": "？",
-    "\"": "＂",
+    '"': "＂",
     "<": "＜",
     ">": "＞",
     "|": "｜",
     "\n": "",
     "\r": "",
 }
+
 
 def sanitize_filename(title: str) -> str:
     result = title

@@ -1,11 +1,18 @@
 import os
 import pathlib
 import re
-from .models import FOLDER_DATE_SUFFIX, FOLDER_NUMBER_PREFIX, FOLDER_SEPARATOR, VODDirectory
-from .io_utils import Colors, c, print_extracted, print_warning
+from .models import (
+    FOLDER_DATE_SUFFIX,
+    FOLDER_NUMBER_PREFIX,
+    FOLDER_SEPARATOR,
+    VODDirectory,
+)
+from .io_utils import print_extracted, print_warning
 
 
-def get_incremented_vod_number(*, file_path: str | None = None, base_directory: str | None = None) -> str:
+def get_incremented_vod_number(
+    *, file_path: str | None = None, base_directory: str | None = None
+) -> str:
     if base_directory is None:
         if file_path:
             base_directory = os.path.dirname(file_path)

@@ -35,12 +35,12 @@ class VODDirectory:
         if file_path:
             base_directory = os.path.join(
                 os.path.dirname(file_path),
-                f"{FOLDER_NUMBER_PREFIX}{vod_number}{FOLDER_SEPARATOR}{vod_date}{FOLDER_DATE_SUFFIX}"
+                f"{FOLDER_NUMBER_PREFIX}{vod_number}{FOLDER_SEPARATOR}{vod_date}{FOLDER_DATE_SUFFIX}",
             )
         if base_path:
             base_directory = os.path.join(
                 base_path,
-                f"{FOLDER_NUMBER_PREFIX}{vod_number}{FOLDER_SEPARATOR}{vod_date}{FOLDER_DATE_SUFFIX}"
+                f"{FOLDER_NUMBER_PREFIX}{vod_number}{FOLDER_SEPARATOR}{vod_date}{FOLDER_DATE_SUFFIX}",
             )
 
         assert base_directory
@@ -73,13 +73,19 @@ class VODDirectory:
         number_part = parts[0].replace(FOLDER_NUMBER_PREFIX, "")
         date_part = parts[1].replace(FOLDER_DATE_SUFFIX, "")
 
-        return cls.create(base_path=os.path.dirname(path), vod_number=number_part, vod_date=date_part)
+        return cls.create(
+            base_path=os.path.dirname(path), vod_number=number_part, vod_date=date_part
+        )
 
     def get_vod_number(self) -> str:
-        return self.base_directory.split(FOLDER_SEPARATOR)[0].replace(FOLDER_NUMBER_PREFIX, "")
+        return self.base_directory.split(FOLDER_SEPARATOR)[0].replace(
+            FOLDER_NUMBER_PREFIX, ""
+        )
 
     def get_vod_date(self) -> str:
-        return self.base_directory.split(FOLDER_SEPARATOR)[1].replace(FOLDER_DATE_SUFFIX, "")
+        return self.base_directory.split(FOLDER_SEPARATOR)[1].replace(
+            FOLDER_DATE_SUFFIX, ""
+        )
 
     def all(self) -> list[str]:
         return [
@@ -144,13 +150,24 @@ class ArchiveSummary:
             )
         )
 
-    def add_success(self, operation: str, description: str, path: str | None, duration: float) -> None:
+    def add_success(
+        self, operation: str, description: str, path: str | None, duration: float
+    ) -> None:
         self.add(operation, "success", description, path, duration)
 
-    def add_failed(self, operation: str, description: str, path: str | None, duration: float, error: str) -> None:
+    def add_failed(
+        self,
+        operation: str,
+        description: str,
+        path: str | None,
+        duration: float,
+        error: str,
+    ) -> None:
         self.add(operation, "failed", description, path, duration, error)
 
-    def add_skipped(self, operation: str, description: str, path: str | None, duration: float = 0.0) -> None:
+    def add_skipped(
+        self, operation: str, description: str, path: str | None, duration: float = 0.0
+    ) -> None:
         self.add(operation, "skipped", description, path, duration)
 
     @property
@@ -195,7 +212,9 @@ class ArchiveSummary:
                 print(f"      {c(Colors.BLUE, 'Path')}: {result.path}")
             if result.error:
                 print(f"      {c(Colors.RED, 'Error')}: {result.error}")
-            print(f"      {c(Colors.YELLOW, 'Duration')}: {result.duration_seconds:.2f}s")
+            print(
+                f"      {c(Colors.YELLOW, 'Duration')}: {result.duration_seconds:.2f}s"
+            )
             print()
 
         print(c(Colors.BLUE, "-" * 60))
@@ -211,7 +230,9 @@ class ArchiveSummary:
         print(f"Total Duration: {duration_str}")
 
         if self.failed_count > 0:
-            status_line = f"{self.success_count} operations completed, {self.failed_count} failed"
+            status_line = (
+                f"{self.success_count} operations completed, {self.failed_count} failed"
+            )
             print(c(Colors.RED, f"Status: {status_line}"))
         else:
             status_line = f"{self.success_count} operations completed, 0 failed"
