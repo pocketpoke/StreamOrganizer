@@ -187,29 +187,42 @@ def handle_twitch_chat(
 
 def handle_youtube_download(
     args: argparse.Namespace,
-    details: Details,
+    details: Details | None,
+    vod_directory: VODDirectory,
     browser: str | None,
     summary: ArchiveSummary | None = None,
-) -> tuple[bool, bool]:
+) -> tuple[bool, bool, Details | None]:
     if not args.youtube_url:
-        return True, True
+        return True, True, details
 
     print_info("Fetching YouTube stream title...")
     stream_title = fetch_youtube_title(args.youtube_url)
 
     if stream_title:
         print_info(f"Extracted YouTube stream title: {stream_title}")
-        details.stream_title = stream_title
     else:
         print_warning("Could not fetch YouTube title, using default")
+        stream_title = "Untitled"
 
-    return organize_youtube(
+    if details is None:
+        details = Details(
+            stream_title=stream_title,
+            vod_number=vod_directory.get_vod_number(),
+            vod_date=vod_directory.get_vod_date(),
+            vod_directory=vod_directory,
+        )
+    else:
+        details.stream_title = stream_title
+
+    vod_ok, chat_ok = organize_youtube(
         details=details,
         chat_only=args.chat_only,
         youtube_url=args.youtube_url,
         browser=browser,
         summary=summary,
     )
+
+    return vod_ok, chat_ok, details
 
 
 def main() -> int:
@@ -304,15 +317,19 @@ def main() -> int:
         return 1
 
     if details is None:
-        mp4_files = [
-            f for f in os.listdir(vod_directory.twitch_directory) if f.endswith(".mp4")
-        ]
-        if mp4_files:
-            file_path = os.path.join(vod_directory.twitch_directory, mp4_files[0])
-            stream_title = get_stream_title_from_file(file_path=file_path)
-        else:
+        if args.youtube_url:
             stream_title = "Untitled"
-            print_warning("VOD not found, using default title")
+        else:
+            mp4_files = [
+                f for f in os.listdir(vod_directory.twitch_directory)
+                if f.endswith(".mp4")
+            ]
+            if mp4_files:
+                file_path = os.path.join(vod_directory.twitch_directory, mp4_files[0])
+                stream_title = get_stream_title_from_file(file_path=file_path)
+            else:
+                stream_title = "Untitled"
+                print_warning("VOD not found, using default title")
 
         confirm = True
         if not args.no_prompts:
@@ -338,7 +355,11 @@ def main() -> int:
         handle_twitch_chat(args, details, summary)
 
     if args.youtube_url:
-        handle_youtube_download(args, details, browser, summary)
+        vod_ok, chat_ok, details = handle_youtube_download(
+            args, details, vod_directory, browser, summary
+        )
+        if not (vod_ok and chat_ok):
+            print_warning("YouTube download had issues")
 
     summary.print_summary()
     return 0
