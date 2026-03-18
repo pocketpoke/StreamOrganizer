@@ -31,9 +31,28 @@
 
           buildInputs = [
             pkgs.python3
-            pkgs.yt-dlp
+            # pkgs.yt-dlp
             pkgs.deno
             self.inputs.twitchdownloadercli.packages.${pkgs.system}.twitchdownloadercli
+
+            (pkgs.stdenv.mkDerivation {
+              name = "yt-dlp-2026.03.17";
+              dontUnpack = true;
+              nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+              buildInputs = [
+                pkgs.zlib
+                pkgs.gcc.cc.lib
+              ];
+              installPhase = ''
+                install -Dm755 ${
+                  pkgs.fetchurl {
+                    url = "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_linux";
+                    hash = "sha256-wrAYn1gf5KLd1BlU8by30yfbBLB+0N6pfk8bPgm13Y4=";
+                  }
+                } $out/bin/yt-dlp
+                chmod +x $out/bin/yt-dlp
+              '';
+            })
           ];
 
           installPhase = ''
@@ -50,8 +69,27 @@
           packages = with pkgs; [
             (python3.withPackages (ps: [ ]))
             deno
-            yt-dlp
+            # yt-dlp
             self.inputs.twitchdownloadercli.packages.${pkgs.system}.twitchdownloadercli
+
+            (pkgs.stdenv.mkDerivation {
+              name = "yt-dlp-2026.03.17";
+              dontUnpack = true;
+              nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+              buildInputs = [
+                pkgs.zlib
+                pkgs.gcc.cc.lib
+              ];
+              installPhase = ''
+                install -Dm755 ${
+                  pkgs.fetchurl {
+                    url = "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_linux";
+                    hash = "sha256-wrAYn1gf5KLd1BlU8by30yfbBLB+0N6pfk8bPgm13Y4=";
+                  }
+                } $out/bin/yt-dlp
+                chmod +x $out/bin/yt-dlp
+              '';
+            })
           ];
         };
       }
