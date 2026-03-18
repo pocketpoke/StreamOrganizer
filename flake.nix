@@ -22,7 +22,7 @@
       {
         packages.default = pkgs.stdenv.mkDerivation {
           pname = "streamorganizer";
-          version = "0.1.1";
+          version = "2.0";
 
           src = ./.;
 
