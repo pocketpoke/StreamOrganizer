@@ -27,7 +27,6 @@
           src = ./.;
 
           nativeBuildInputs = [
-            pkgs.makeWrapper
           ];
 
           buildInputs = [
@@ -39,14 +38,11 @@
 
           installPhase = ''
             mkdir -p $out/bin
-            mkdir -p $out/lib/python3.12/site-packages/src
+            mkdir -p $out/lib/python3.12/site-packages
 
-            cp -r $src/main.py $out/bin/streamorganizer
-            cp -r $src/src/* $out/lib/python3.12/site-packages/src/
+            cp $src/main.py $out/bin/streamorganizer
+            cp -r $src/src $out/lib/python3.12/site-packages/
             chmod +x $out/bin/streamorganizer
-
-            wrapProgram $out/bin/streamorganizer \
-              --prefix PYTHONPATH "$out/lib/python3.12/site-packages"
           '';
         };
 
