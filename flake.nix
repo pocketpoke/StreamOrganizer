@@ -22,7 +22,7 @@
       {
         packages.default = pkgs.stdenv.mkDerivation {
           pname = "streamorganizer";
-          version = "0.1.1";
+          version = "2.0";
 
           src = ./.;
 
@@ -39,11 +39,14 @@
 
           installPhase = ''
             mkdir -p $out/bin
+            mkdir -p $out/lib/python3.12/site-packages/src
 
-            cp $src/main.py $out/bin/streamorganizer
+            cp -r $src/main.py $out/bin/streamorganizer
+            cp -r $src/src/* $out/lib/python3.12/site-packages/src/
             chmod +x $out/bin/streamorganizer
 
-            wrapProgram $out/bin/streamorganizer
+            wrapProgram $out/bin/streamorganizer \
+              --prefix PYTHONPATH "$out/lib/python3.12/site-packages"
           '';
         };
 
