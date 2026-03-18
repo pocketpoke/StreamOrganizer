@@ -1,6 +1,7 @@
 import argparse
 import os
 import sys
+import time
 
 from .commands import (
     fetch_youtube_title,
@@ -15,7 +16,7 @@ from .discovery import (
     get_vod_date_from_file,
 )
 from .io_utils import Colors, c, print_error, print_info, print_step, print_success, print_warning
-from .models import Details, VODDirectory
+from .models import ArchiveSummary, Details, VODDirectory
 from .prompts import (
     prompt_for_browser,
     prompt_for_missing_info,
@@ -94,6 +95,7 @@ def ensure_vod_directory(
     vod_date: str | None,
     base_path: str,
     selected_directory: VODDirectory | None = None,
+    summary: ArchiveSummary | None = None,
 ) -> tuple[VODDirectory | None, Details | None]:
     if selected_directory:
         return selected_directory, None
@@ -111,14 +113,22 @@ def ensure_vod_directory(
             print_error("Couldn't extract VOD date from filename. Use --vod-date to specify.")
             return None, None
 
+        start_time = time.time()
         vod_directory = VODDirectory.create(
             file_path=file_path,
             vod_number=vod_number,
             vod_date=vod_date,
         )
+        duration = time.time() - start_time
 
         for directory in vod_directory.all():
             print_step(directory)
+
+        if summary:
+            all_dirs = vod_directory.all()
+            dir_duration = duration / len(all_dirs) if all_dirs else 0
+            for path in all_dirs:
+                summary.add_success("Directory Created", path, path, dir_duration)
 
         details = Details(
             stream_title=stream_title,
@@ -141,14 +151,22 @@ def ensure_vod_directory(
     if existing:
         return existing, None
 
+    start_time = time.time()
     vod_directory = VODDirectory.create(
         base_path=base_path,
         vod_number=vod_number,
         vod_date=vod_date,
     )
+    duration = time.time() - start_time
 
     for directory in vod_directory.all():
         print_step(directory)
+
+    if summary:
+        all_dirs = vod_directory.all()
+        dir_duration = duration / len(all_dirs) if all_dirs else 0
+        for path in all_dirs:
+            summary.add_success("Directory Created", path, path, dir_duration)
 
     return vod_directory, None
 
@@ -157,24 +175,27 @@ def handle_file_organization(
     args: argparse.Namespace,
     details: Details,
     file_path: str,
+    summary: ArchiveSummary | None = None,
 ) -> bool:
-    return organize_file(details=details, file_path=file_path)
+    return organize_file(details=details, file_path=file_path, summary=summary)
 
 
 def handle_twitch_chat(
     args: argparse.Namespace,
     details: Details,
+    summary: ArchiveSummary | None = None,
 ) -> bool:
     if not args.twitch_url:
         return True
 
-    return organize_twitch_chat(details=details, twitch_url=args.twitch_url)
+    return organize_twitch_chat(details=details, twitch_url=args.twitch_url, summary=summary)
 
 
 def handle_youtube_download(
     args: argparse.Namespace,
     details: Details,
     browser: str | None,
+    summary: ArchiveSummary | None = None,
 ) -> tuple[bool, bool]:
     if not args.youtube_url:
         return True, True
@@ -193,6 +214,7 @@ def handle_youtube_download(
         chat_only=args.chat_only,
         youtube_url=args.youtube_url,
         browser=browser,
+        summary=summary,
     )
 
 
@@ -204,6 +226,7 @@ def main() -> int:
 
     base_path = args.base_path
     browser: str | None = args.browser
+    summary = ArchiveSummary()
 
     provided_file = bool(args.file)
     provided_twitch = bool(args.twitch_url)
@@ -273,6 +296,7 @@ def main() -> int:
         vod_number=args.vod_number,
         vod_date=args.vod_date,
         base_path=base_path,
+        summary=summary,
     )
 
     if not vod_directory:
@@ -297,6 +321,7 @@ def main() -> int:
 
         if not confirm:
             print_info("Aborted by user")
+            summary.print_summary()
             return 1
 
         details = Details(
@@ -307,19 +332,16 @@ def main() -> int:
         )
 
     if args.file:
-        if not handle_file_organization(args, details, args.file):
-            return 1
+        if not handle_file_organization(args, details, args.file, summary):
+            pass
 
     if args.twitch_url:
-        if not handle_twitch_chat(args, details):
-            print_warning("Twitch chat download had issues")
+        handle_twitch_chat(args, details, summary)
 
     if args.youtube_url:
-        vod_ok, chat_ok = handle_youtube_download(args, details, browser)
-        if not (vod_ok and chat_ok):
-            print_warning("YouTube download had issues")
+        handle_youtube_download(args, details, browser, summary)
 
-    print_success("Archive process completed!")
+    summary.print_summary()
     return 0
 
 

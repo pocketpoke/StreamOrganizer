@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import os
 
 FOLDER_SEPARATOR = " ] - [ "
@@ -108,3 +108,113 @@ class UserInput:
     vod_date: str | None = None
     selected_directory: VODDirectory | None = None
     proceed_without_cookies: bool = False
+
+
+@dataclass
+class OperationResult:
+    operation: str
+    status: str
+    description: str
+    path: str | None
+    duration_seconds: float
+    error: str | None = None
+
+
+@dataclass
+class ArchiveSummary:
+    results: list[OperationResult] = field(default_factory=list)
+
+    def add(
+        self,
+        operation: str,
+        status: str,
+        description: str,
+        path: str | None,
+        duration: float,
+        error: str | None = None,
+    ) -> None:
+        self.results.append(
+            OperationResult(
+                operation=operation,
+                status=status,
+                description=description,
+                path=path,
+                duration_seconds=duration,
+                error=error,
+            )
+        )
+
+    def add_success(self, operation: str, description: str, path: str | None, duration: float) -> None:
+        self.add(operation, "success", description, path, duration)
+
+    def add_failed(self, operation: str, description: str, path: str | None, duration: float, error: str) -> None:
+        self.add(operation, "failed", description, path, duration, error)
+
+    def add_skipped(self, operation: str, description: str, path: str | None, duration: float = 0.0) -> None:
+        self.add(operation, "skipped", description, path, duration)
+
+    @property
+    def total_duration(self) -> float:
+        return sum(r.duration_seconds for r in self.results)
+
+    def all_success(self) -> bool:
+        return all(r.status == "success" for r in self.results)
+
+    @property
+    def success_count(self) -> int:
+        return sum(1 for r in self.results if r.status == "success")
+
+    @property
+    def failed_count(self) -> int:
+        return sum(1 for r in self.results if r.status == "failed")
+
+    @property
+    def skipped_count(self) -> int:
+        return sum(1 for r in self.results if r.status == "skipped")
+
+    def print_summary(self) -> None:
+        from .io_utils import Colors, c
+
+        print()
+        print(c(Colors.BLUE, "=" * 60))
+        print(c(Colors.BLUE, "                      ARCHIVE SUMMARY"))
+        print(c(Colors.BLUE, "=" * 60))
+        print()
+
+        for result in self.results:
+            if result.status == "success":
+                status_icon = c(Colors.GREEN, "[ \u2713 ]")
+            elif result.status == "failed":
+                status_icon = c(Colors.RED, "[ \u2717 ]")
+            else:
+                status_icon = c(Colors.YELLOW, "[ - ]")
+
+            print(f"{status_icon} {result.operation}")
+            print(f"      {result.description}")
+            if result.path:
+                print(f"      {c(Colors.BLUE, 'Path')}: {result.path}")
+            if result.error:
+                print(f"      {c(Colors.RED, 'Error')}: {result.error}")
+            print(f"      {c(Colors.YELLOW, 'Duration')}: {result.duration_seconds:.2f}s")
+            print()
+
+        print(c(Colors.BLUE, "-" * 60))
+
+        total = self.total_duration
+        if total >= 60:
+            minutes = int(total // 60)
+            seconds = total % 60
+            duration_str = f"{total:.2f}s ({minutes}m {seconds:.0f}s)"
+        else:
+            duration_str = f"{total:.2f}s"
+
+        print(f"Total Duration: {duration_str}")
+
+        if self.failed_count > 0:
+            status_line = f"{self.success_count} operations completed, {self.failed_count} failed"
+            print(c(Colors.RED, f"Status: {status_line}"))
+        else:
+            status_line = f"{self.success_count} operations completed, 0 failed"
+            print(c(Colors.GREEN, f"Status: {status_line}"))
+
+        print(c(Colors.BLUE, "=" * 60))

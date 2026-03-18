@@ -1,6 +1,12 @@
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from os import get_terminal_size
 from .io_utils import Colors, c, print_error
+
+
+def _clear_line():
+    columns, _ = get_terminal_size()
+    print("\r" + " " * columns + "\r", end="", flush=True)
 
 
 @dataclass
@@ -42,8 +48,12 @@ def run_command_streaming(
             if output == "" and process.poll() is not None:
                 break
             if output:
-                print(output.strip())
-                stdout_lines.append(output.strip())
+                stripped = output.strip()
+                _clear_line()
+                print(stripped, end="\r", flush=True)
+                stdout_lines.append(stripped)
+
+        print()
 
         if process.stderr:
             stderr_output = process.stderr.read()
@@ -51,6 +61,8 @@ def run_command_streaming(
                 print_error(f"{task_name} error output:")
                 print(stderr_output)
                 stderr_lines.append(stderr_output)
+
+        print()
 
         if process.returncode == 0:
             print(c(Colors.GREEN, f"[{task_name}] Completed successfully"))
