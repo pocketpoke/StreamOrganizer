@@ -69,7 +69,7 @@
             wrapProgram $out/bin/streamorganizer \
               --prefix PATH : "${yt-dlp}/bin" \
               --prefix PATH : "${twitch-cli}/bin" \
-              --prefix PATH : "${pkgs.deno}/bin
+              --prefix PATH : "${pkgs.deno}/bin"
           '';
         };
 
