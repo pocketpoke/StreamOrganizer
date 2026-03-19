@@ -15,7 +15,7 @@ from .discovery import (
     get_stream_title_from_file,
     get_vod_date_from_file,
 )
-from .io_utils import print_error, print_info, print_step, print_warning
+from .io_utils import Colors, c, print_error, print_info, print_step, print_warning
 from .models import ArchiveSummary, Details, VODDirectory
 from .prompts import (
     prompt_for_browser,
@@ -57,8 +57,52 @@ def parse_args() -> argparse.Namespace:
         default=os.getcwd(),
         help="Base directory for VOD organization (default: current directory)",
     )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print debug information and exit",
+    )
 
     return parser.parse_args()
+
+
+def print_debug_info() -> None:
+    import platform
+    import subprocess
+
+    print()
+    print(c(Colors.BLUE, "=" * 60))
+    print(c(Colors.BLUE, "                      DEBUG INFO"))
+    print(c(Colors.BLUE, "=" * 60))
+    print()
+
+    print(f"Python: {sys.version.split()[0]}")
+    print(f"Platform: {platform.platform()}")
+    print(f"Current directory: {os.getcwd()}")
+    print()
+
+    tools = [
+        ("yt-dlp", ["yt-dlp", "--version"]),
+        ("TwitchDownloaderCLI", ["TwitchDownloaderCLI", "--version"]),
+        ("ffmpeg", ["ffmpeg", "-version"]),
+    ]
+
+    print(c(Colors.YELLOW, "Tool Versions:"))
+    for name, cmd in tools:
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                version_line = result.stdout.split("\n")[0]
+                print(f"  {name}: {version_line}")
+            else:
+                print(f"  {name}: Not found or error")
+        except FileNotFoundError:
+            print(f"  {name}: Not installed")
+        except subprocess.TimeoutExpired:
+            print(f"  {name}: Timeout")
+
+    print()
+    print(c(Colors.BLUE, "=" * 60))
 
 
 def validate_args(args: argparse.Namespace) -> bool:
@@ -227,6 +271,10 @@ def handle_youtube_download(
 
 def main() -> int:
     args = parse_args()
+
+    if args.debug:
+        print_debug_info()
+        return 0
 
     if not validate_args(args):
         return 1
