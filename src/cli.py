@@ -91,8 +91,9 @@ def print_debug_info() -> None:
     for name, cmd in tools:
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=5)
-            if result.returncode == 0:
-                version_line = result.stdout.split("\n")[0]
+            output = result.stdout if result.stdout else result.stderr
+            if output:
+                version_line = output.split("\n")[0]
                 print(f"  {name}: {version_line}")
             else:
                 print(f"  {name}: Not found or error")
