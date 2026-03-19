@@ -18,6 +18,27 @@
       system:
       let
         pkgs = import nixpkgs { inherit system; };
+
+        yt-dlp = pkgs.stdenv.mkDerivation {
+          name = "yt-dlp-2026.03.17";
+          dontUnpack = true;
+          nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+          buildInputs = [
+            pkgs.zlib
+            pkgs.gcc.cc.lib
+          ];
+          installPhase = ''
+            install -Dm755 ${
+              pkgs.fetchurl {
+                url = "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_linux";
+                hash = "sha256-wrAYn1gf5KLd1BlU8by30yfbBLB+0N6pfk8bPgm13Y4=";
+              }
+            } $out/bin/yt-dlp
+            chmod +x $out/bin/yt-dlp
+          '';
+        };
+
+        twitch-cli = self.inputs.twitchdownloadercli.packages.${pkgs.system}.twitchdownloadercli;
       in
       {
         packages.default = pkgs.stdenv.mkDerivation {
@@ -27,32 +48,14 @@
           src = ./.;
 
           nativeBuildInputs = [
+            pkgs.makeWrapper
           ];
 
           buildInputs = [
             pkgs.python3
-            # pkgs.yt-dlp
             pkgs.deno
-            self.inputs.twitchdownloadercli.packages.${pkgs.system}.twitchdownloadercli
-
-            (pkgs.stdenv.mkDerivation {
-              name = "yt-dlp-2026.03.17";
-              dontUnpack = true;
-              nativeBuildInputs = [ pkgs.autoPatchelfHook ];
-              buildInputs = [
-                pkgs.zlib
-                pkgs.gcc.cc.lib
-              ];
-              installPhase = ''
-                install -Dm755 ${
-                  pkgs.fetchurl {
-                    url = "https://github.com/yt-dlp/yt-dlp/releases/download/2026.03.17/yt-dlp_linux";
-                    hash = "sha256-wrAYn1gf5KLd1BlU8by30yfbBLB+0N6pfk8bPgm13Y4=";
-                  }
-                } $out/bin/yt-dlp
-                chmod +x $out/bin/yt-dlp
-              '';
-            })
+            yt-dlp
+            twitch-cli
           ];
 
           installPhase = ''
@@ -62,6 +65,10 @@
             cp $src/main.py $out/bin/streamorganizer
             cp -r $src/src $out/lib/python3.12/site-packages/
             chmod +x $out/bin/streamorganizer
+
+            wrapProgram $out/bin/streamorganizer \
+              --prefix PATH : "${yt-dlp}/bin" \
+              --prefix PATH : "${twitch-cli}/bin"
           '';
         };
 
@@ -69,7 +76,6 @@
           packages = with pkgs; [
             (python3.withPackages (ps: [ ]))
             deno
-            # yt-dlp
             self.inputs.twitchdownloadercli.packages.${pkgs.system}.twitchdownloadercli
 
             (pkgs.stdenv.mkDerivation {
