@@ -176,7 +176,9 @@ def prompt_for_retry_confirmation(vod_dir: VODDirectory, stream_title: str) -> b
 
 
 def prompt_for_browser() -> str | None:
+    print_info("=" * 60)
     print_info("Browser for cookie authentication:")
+    print_info("=" * 60)
     print("  [1] Brave")
     print("  [2] Chrome")
     print("  [3] Firefox")
