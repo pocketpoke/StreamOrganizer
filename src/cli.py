@@ -17,6 +17,7 @@ from .discovery import (
 )
 from .io_utils import Colors, c, print_error, print_info, print_step, print_warning
 from .models import ArchiveSummary, Details, VODDirectory
+from .uploader import UploadConfig, parallel_upload, _parse_destination
 from .prompts import (
     prompt_for_browser,
     prompt_for_missing_info,
@@ -61,6 +62,29 @@ def parse_args() -> argparse.Namespace:
         "--debug",
         action="store_true",
         help="Print debug information and exit",
+    )
+    parser.add_argument(
+        "--upload",
+        action="store_true",
+        help="Upload the completed archive to a remote server via rsync",
+    )
+    parser.add_argument(
+        "--upload-destination",
+        help="Upload destination (user@hostname or user@hostname:/path)",
+    )
+    parser.add_argument(
+        "--upload-host",
+        help="Remote host for upload (user@hostname)",
+    )
+    parser.add_argument(
+        "--upload-dest",
+        help="Remote destination path on server",
+    )
+    parser.add_argument(
+        "--upload-max-jobs",
+        type=int,
+        default=6,
+        help="Max concurrent uploads (default: 6)",
     )
 
     return parser.parse_args()
@@ -270,6 +294,69 @@ def handle_youtube_download(
     return vod_ok, chat_ok, details
 
 
+def parse_upload_config(args: argparse.Namespace) -> UploadConfig | None:
+    if args.upload_destination:
+        remote_host, remote_path = _parse_destination(args.upload_destination)
+    elif args.upload_host:
+        remote_host = args.upload_host
+        remote_path = args.upload_dest or ""
+    else:
+        return None
+
+    if not remote_host:
+        print_error("Remote host is required for upload")
+        return None
+
+    if remote_path and not remote_path.startswith("/"):
+        remote_path = "/" + remote_path
+
+    if remote_path and not remote_path.endswith("/"):
+        remote_path += "/"
+
+    return UploadConfig(
+        remote_host=remote_host,
+        remote_path=remote_path,
+        max_jobs=args.upload_max_jobs,
+    )
+
+
+def handle_upload(
+    paths: list[str],
+    config: UploadConfig,
+    summary: ArchiveSummary | None = None,
+) -> bool:
+    if not paths:
+        return True
+
+    from .uploader import parallel_upload
+
+    results = parallel_upload(paths, config)
+
+    all_success = True
+    for result in results:
+        if summary:
+            if result.success:
+                summary.add_success(
+                    "Upload",
+                    f"{result.local_path} -> {result.remote_path}",
+                    result.local_path,
+                    result.duration_seconds,
+                )
+            else:
+                summary.add_failed(
+                    "Upload",
+                    f"{result.local_path} -> {result.remote_path}",
+                    result.local_path,
+                    result.duration_seconds,
+                    result.error or "Unknown error",
+                )
+                all_success = False
+        else:
+            all_success = all_success and result.success
+
+    return all_success
+
+
 def main() -> int:
     args = parse_args()
 
@@ -409,6 +496,17 @@ def main() -> int:
         )
         if not (vod_ok and chat_ok):
             print_warning("YouTube download had issues")
+
+    if args.upload and vod_directory:
+        upload_config = parse_upload_config(args)
+        if upload_config:
+            print_info("=" * 60)
+            print_info("Starting upload...")
+            handle_upload([vod_directory.base_directory], upload_config, summary)
+        else:
+            print_error("Invalid upload configuration")
+            summary.print_summary()
+            return 1
 
     summary.print_summary()
     return 0
