@@ -121,10 +121,12 @@ def find_vod_directory(
         existing_number = parts[0].replace(FOLDER_NUMBER_PREFIX, "")
         existing_date = parts[1].replace(FOLDER_DATE_SUFFIX, "")
 
-        if vod_number and existing_number == vod_number:
+        if vod_number and vod_date:
+            if existing_number == vod_number and existing_date == vod_date:
+                return VODDirectory.from_path(item_path)
+        elif vod_number and existing_number == vod_number:
             return VODDirectory.from_path(item_path)
-
-        if vod_date and existing_date == vod_date:
+        elif vod_date and existing_date == vod_date:
             return VODDirectory.from_path(item_path)
 
     return None
