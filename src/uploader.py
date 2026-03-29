@@ -97,9 +97,16 @@ def upload_single(
 
     print_info(f"Starting upload: {local_path}  ->  {remote_full}")
 
-    cmd = _build_rsync_command(
-        local_path, config.remote_host, config.remote_path, config.rsync_opts
-    )
+    cmd = [
+        "rsync",
+        "-r",
+    ]
+
+    for opt in config.rsync_opts.split():
+        if opt:
+            cmd.append(opt)
+
+    cmd.extend(["--rsh=ssh", f"{local_path}/", remote_full])
 
     start_time = time.time()
 
