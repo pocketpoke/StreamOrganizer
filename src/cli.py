@@ -324,13 +324,14 @@ def handle_upload(
     paths: list[str],
     config: UploadConfig,
     summary: ArchiveSummary | None = None,
+    base_directory: str | None = None,
 ) -> bool:
     if not paths:
         return True
 
     from .uploader import parallel_upload
 
-    results = parallel_upload(paths, config)
+    results = parallel_upload(paths, config, base_directory)
 
     all_success = True
     for result in results:
@@ -508,9 +509,9 @@ def main() -> int:
                 if os.path.isdir(os.path.join(vod_directory.base_directory, d))
             ]
             if subdirs:
-                handle_upload(subdirs, upload_config, summary)
+                handle_upload(subdirs, upload_config, summary, vod_directory.base_directory)
             else:
-                handle_upload([vod_directory.base_directory], upload_config, summary)
+                handle_upload([vod_directory.base_directory], upload_config, summary, vod_directory.base_directory)
         else:
             print_error("Invalid upload configuration")
             summary.print_summary()

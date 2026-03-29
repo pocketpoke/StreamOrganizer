@@ -87,9 +87,13 @@ def _build_rsync_command(
 def upload_single(
     local_path: str,
     config: UploadConfig,
+    base_directory: str | None = None,
 ) -> UploadResult:
-    src_name = _get_directory_name(local_path)
-    remote_full = f"{config.remote_host}:{config.remote_path}{src_name}/"
+    if base_directory:
+        rel_path = os.path.relpath(local_path, base_directory)
+    else:
+        rel_path = _get_directory_name(local_path)
+    remote_full = f"{config.remote_host}:{config.remote_path}{rel_path}/"
 
     print_info(f"Starting upload: {local_path}  ->  {remote_full}")
 
@@ -135,7 +139,7 @@ def upload_single(
                             pass
 
         if process.returncode == 0:
-            print(c(Colors.GREEN, f"Done: {src_name}"))
+            print(c(Colors.GREEN, f"Done: {rel_path}"))
             return UploadResult(
                 local_path=local_path,
                 remote_path=remote_full,
@@ -145,7 +149,7 @@ def upload_single(
             )
         else:
             error_msg = f"rsync exited with code {process.returncode}"
-            print(c(Colors.RED, f"Failed: {src_name}"))
+            print(c(Colors.RED, f"Failed: {rel_path}"))
             return UploadResult(
                 local_path=local_path,
                 remote_path=remote_full,
@@ -177,6 +181,7 @@ def upload_single(
 def parallel_upload(
     paths: list[str],
     config: UploadConfig,
+    base_directory: str | None = None,
 ) -> list[UploadResult]:
     if not paths:
         return []
@@ -211,7 +216,7 @@ def parallel_upload(
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=config.max_jobs) as executor:
         future_to_path = {
-            executor.submit(upload_single, path, config): path
+            executor.submit(upload_single, path, config, base_directory): path
             for path in valid_paths
         }
 
