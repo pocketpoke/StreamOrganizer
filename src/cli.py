@@ -502,7 +502,15 @@ def main() -> int:
         if upload_config:
             print_info("=" * 60)
             print_info("Starting upload...")
-            handle_upload([vod_directory.base_directory], upload_config, summary)
+            subdirs = [
+                os.path.join(vod_directory.base_directory, d)
+                for d in os.listdir(vod_directory.base_directory)
+                if os.path.isdir(os.path.join(vod_directory.base_directory, d))
+            ]
+            if subdirs:
+                handle_upload(subdirs, upload_config, summary)
+            else:
+                handle_upload([vod_directory.base_directory], upload_config, summary)
         else:
             print_error("Invalid upload configuration")
             summary.print_summary()
