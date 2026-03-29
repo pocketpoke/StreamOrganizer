@@ -458,7 +458,8 @@ def main() -> int:
             stream_title = "Untitled"
         else:
             mp4_files = [
-                f for f in os.listdir(vod_directory.twitch_directory)
+                f
+                for f in os.listdir(vod_directory.twitch_directory)
                 if f.endswith(".mp4")
             ]
             if mp4_files:
@@ -509,9 +510,19 @@ def main() -> int:
                 if os.path.isdir(os.path.join(vod_directory.base_directory, d))
             ]
             if subdirs:
-                handle_upload(subdirs, upload_config, summary, vod_directory.base_directory)
+                handle_upload(
+                    subdirs,
+                    upload_config,
+                    summary,
+                    os.path.dirname(vod_directory.base_directory),
+                )
             else:
-                handle_upload([vod_directory.base_directory], upload_config, summary, vod_directory.base_directory)
+                handle_upload(
+                    [vod_directory.base_directory],
+                    upload_config,
+                    summary,
+                    os.path.dirname(vod_directory.base_directory),
+                )
         else:
             print_error("Invalid upload configuration")
             summary.print_summary()
